@@ -1,5 +1,6 @@
 # Publish ShinyApp
 This file explains step by step how to publish a ShinyApp on the vesalius.ugent.be server. All code in this file was made to make the ShinyApp for SingleCell_DiffTrack public. For different projects, different names can be used.
+First of all, make sure you are connected to the UGent VPN, otherwise you can't connect to vesalius.ugent.be.
 
 ## Step 1: Create a directory for the ShinyApp
 Make a new directory for the ShinyApp, put all the files in this directory that the ShinyApp uses. This is the actual app (named specifically app.R, nothing else), the data, any other scripts the ShinyApp sources, pictures the ShinyApp uses, ... Be aware, the name of this directory will also be the name of the public ShinyApp.
@@ -43,6 +44,7 @@ conda env create -f shiny.yml -p shinyenv
 ## Step 4: Transfer files to the remote server
 The folder with the ShinyApp and the other files can now be transferred to the remote server(Vesalius). To transfer files to the remote server, a username and password is needed. This is given by the host of the server. In this case, the username is sarahlee.
 A secure copy, scp, is used to transfer the files. The -r means "recursive", allowing to copy directories with it's contents. The directory SingleCell_DiffTrack is copied to the /home/sarahlee/projects folder on the Vesalius server.
+Make sure you are connected to the UGent VPN, otherwise you can't connect to vesalius.ugent.be.
 ```
 scp -r ./SingleCell_DiffTrack sarahlee@vesalius.ugent.be:/home/sarahlee/projects
 ```
@@ -89,9 +91,11 @@ conda env remove -p /home/sarahlee/projects/SingleCell_DiffTrack/SingleCell_Diff
 ```
 
 ## R is not loading the correct version of libssl
-```Error: package or namespace load failed for ‘GenomeInfoDb’ in dyn.load(file, DLLpath = DLLpath, ...):```
-```unable to load shared object '/home/sarahlee/projects/SingleCell_DiffTrack/SingleCell_DiffTrack/lib/R/library/RCurl/libs/RCurl.so':```
-```/lib/x86_64-linux-gnu/libssl.so.3: version `OPENSSL_3.2.0' not found (required by /home/sarahlee/projects/SingleCell_DiffTrack/SingleCell_DiffTrack/lib/R/library/RCurl/libs/../../../../libcurl.so.4)Error: package ‘GenomeInfoDb’ could not be loaded```
+```
+Error: package or namespace load failed for ‘GenomeInfoDb’ in dyn.load(file, DLLpath = DLLpath, ...):
+unable to load shared object '/home/sarahlee/projects/SingleCell_DiffTrack/SingleCell_DiffTrack/lib/R/library/RCurl/libs/RCurl.so':
+/lib/x86_64-linux-gnu/libssl.so.3: version `OPENSSL_3.2.0' not found (required by /home/sarahlee/projects/SingleCell_DiffTrack/SingleCell_DiffTrack/lib/R/library/RCurl/libs/../../../../libcurl.so.4)Error: package ‘GenomeInfoDb’ could not be loaded
+```
 When this error occurs, it means R is not loading the correct version of libssl by default. To solve this you should locate the right libssl version, or install it if there is no good libssl version yet installed. When installed and located, copy the right the libcrypt* and libssl.so* files to the lib/ folder in your environment folder.
 ```
 cd SingleCell_DiffTrack/lib
