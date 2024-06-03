@@ -84,6 +84,27 @@ ui <- dashboardPage(
   ),
   # sidebarmenu
   dashboardSidebar(
+    tags$style(type = "text/css",
+               # color download button black,  text shadow first line adds light shadow below text, second line adds shadow above text
+               # linear gradient background from light to darker gray from left to right (90degrees), radial background centered at 50% horizontally, 15% vertically, starts from white at center and goes grayish at 80% of radius
+               # no repeat to ensure background gradiens is not repeated, size to larger the button and center background gradient at center of button
+               "#download_UMAP_WT, #download_GeneExp_WT, #download_violinplot_WT, #download_degenes, #download_signature, #download_pseudo_dimplot, #download_pseudo_ggplots {
+               	color: black;
+	              text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8), 0 -1px 2px rgba(255, 255, 255, 0.2);
+	              background: linear-gradient(90deg,
+		              rgba(224, 227, 232, 1) 0%,
+		              rgba(192, 194, 196, 1) 100%
+	              );
+	
+	              background: radial-gradient(100% 100% at 50% 15%, 
+		              rgba(255, 255, 255, 1), 
+		              rgba(143, 149, 163, 1) 80%
+	              );
+	
+	              background-repeat: no-repeat;
+	              background-size: 110% 120%;
+	              background-position: center center;
+               }"),
     # sidebarmenu with identification of the different menu's via menuItem
     sidebarMenu(id = "sidebarid",
                 menuItem(text = "Gene Expression", tabName = "gene_exp"),
@@ -184,7 +205,7 @@ ui <- dashboardPage(
                        uiOutput("pseudo_text"),
                        tags$br(),
                        imageOutput("WT_dimplot"),
-                       plotOutput("WT_pseudoplots", width = 1250))
+                       plotOutput("WT_pseudoplots"))
       )
     )
   )
@@ -323,7 +344,7 @@ server <- function(input, output, session) {
                                        vjust = 1,
                                        size = 10), 
             axis.text.y = element_text(size = 10),  
-            plot.title = element_text(size=10),
+            plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.background = element_blank(),
@@ -453,6 +474,7 @@ server <- function(input, output, session) {
     )
   })
   
+  
   # Reactive expression to read and process the uploaded file
   genes_from_file <- reactive({
     req(input$file)
@@ -493,7 +515,7 @@ server <- function(input, output, session) {
     header <- input$header
     
     # Show notification for signature score calculation
-    showNotification("Signature Score being calculated, please be patient")
+    showNotification("Signature Score being calculated, please be patient", type = "message", duration = NULL, id = "calculationNotif")
     # Run signature scoring
     DefaultAssay(cell) <- "RNA"
     u.scores <- enrichIt(obj = cell, gene.sets = signatures, groups = 2000, 
@@ -510,10 +532,14 @@ server <- function(input, output, session) {
     featureplot <- FeaturePlot(cell, features = "user_genes", cols = c("lightgrey", "#FF6600", "#FF0000"))
     Feature_HeaderPlot<- featureplot + labs(title = header)
     
+    # Remove the calculation notification once done
+    removeNotification(id = "calculationNotif")
+    
     # Render the plot with header
     output$signature_plot <- renderPlot({
       UMAPPlot(cell, group.by = "CellType") + Feature_HeaderPlot
     })
+    
     
     # downloadbutton for the signatureplot
     output$download_signature <- downloadHandler(
@@ -555,7 +581,7 @@ server <- function(input, output, session) {
     list(
       src = "Pseudotime.png",
       contentType = "image/png",
-      width = 1250, # adjust according to your plot size
+      width = "100%", # adjust according to your plot size
       height = 400
     )
   }, deleteFile = FALSE)
