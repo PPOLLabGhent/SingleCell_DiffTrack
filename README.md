@@ -19,4 +19,4 @@ Also a .gitattributs can be found here, this was used to import the large .rds f
 
 To get a biological background for the app, the published paper can be found in the link: https://www.sciencedirect.com/science/article/pii/S2589004223021739.
 
-The published ShinyApp can be found on https://www.sciencedirect.com/science/article/pii/S2589004223021739. For this app, the script BruggemanTim_ShinyApp_NoALK.R was used.
+The published ShinyApp can be found on https://ccgg.ugent.be/shiny/singlecell_difftrack/. For this app, the script BruggemanTim_ShinyApp_NoALK.R was used.
