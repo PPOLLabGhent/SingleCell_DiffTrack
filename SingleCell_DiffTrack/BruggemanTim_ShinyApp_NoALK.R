@@ -4,39 +4,40 @@
 ######################
 ## Packages to load ##
 ######################
-# making a library to store my packages in with path
-lib_path <- "/user/gent/476/vsc47620/R/x86_64-pc-linux-gnu-library/4.2"
+
 
 # install.packages("shiny",lib = lib_path)
-library(shiny, lib.loc = lib_path)
+library(shiny)
 # install.packages("Seurat", lib = lib_path)
-library(Seurat, lib.loc = lib_path)
+library(Seurat)
 # install.packages("bslib", lib = lib_path)
-library(bslib, lib.loc = lib_path)
+library(bslib)
 # install.packages("shinydashboard", lib = lib_path)
-library(shinydashboard, lib.loc = lib_path)
+library(shinydashboard)
 # install.packages("DT", lib = lib_path)
-library(DT, lib.loc = lib_path)
+library(DT)
 # install.packages("dplyr", lib = lib_path)
-library(dplyr, lib.loc = lib_path)
+library(dplyr)
 # install.packages("ggplot2", lib = lib_path)
-library(ggplot2, lib.loc = lib_path)
+library(ggplot2)
 # install.packages("ggpubr", lib = lib_path)
-library(ggpubr, lib.loc = lib_path) # for the stat_compare_means
+library(ggpubr) # for the stat_compare_means
 # BiocManager::install("slingshot", lib = lib_path)
-library(slingshot, lib.loc = lib_path)
+library(slingshot)
 # install.packages("viridis", lib = lib_path)
-library(viridis, lib.loc = lib_path)
+library(viridis)
 # BiocManager::install("escape", lib = lib_path)
-library(escape, lib.loc = lib_path)
+library(escape)
 # install.packages("UCell", lib = lib_path)
-library(UCell, lib.loc = lib_path) # for the signature score
+library(UCell) # for the signature score
 # install.packages("gridExtra", lib = lib_path)
-library(gridExtra, lib.loc = lib_path)
+library(gridExtra)
+# install.packages("grid", lib = lib_path)
+library(grid)
 # install.packages("shinyjs", lib = lib_path)
-library(shinyjs, lib.loc = lib_path) # to reset input file for signaturetab
+library(shinyjs) # to reset input file for signaturetab
 # install.packages("openxlsx", lib = lib_path)
-library(openxlsx, lib.loc = lib_path)
+library(openxlsx)
 
 
 options(bitmapType = "cairo") # specific for the HPC to make plots
@@ -45,9 +46,9 @@ options(bitmapType = "cairo") # specific for the HPC to make plots
 #########################
 ## Loading in the data ##
 #########################
-cell <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/RDSObjects/CellsOfInterest_SLB.rds")
-DEGenes <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/DEGenes.RDS")
-sce_slingshot <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/ShinyApp/sce_slingshot.rds")
+cell <- readRDS("./CellsOfInterest_SLB.rds")
+DEGenes <- readRDS("./DEGenes.RDS")
+sce_slingshot <- readRDS("./sce_slingshot.rds")
 
 #######################################
 ## variables to use in the interface ##
@@ -143,7 +144,7 @@ ui <- dashboardPage(
                 conditionalPanel("input.sidebarid == 'score'",
                                  fileInput("file", "Upload text file", accept = c(".txt")),
                                  textInput("genes", "Enter gene names (separated by comma and at least 5 genes)"),
-                                 textInput("header", "Enter you plot title here:"),
+                                 textInput("header", "Enter you plot title here"),
                                  actionButton("calculate", "Calculate Signature Score"),
                                  tags$br(),
                                  div(style = "text-align: center;",
@@ -216,8 +217,8 @@ ui <- dashboardPage(
 ## Define server logic ##
 #########################
 server <- function(input, output, session) {
-  # General output
-  ################
+  # General output : UI
+  #####################
   # Putting the logo in the dashbordheader
   output$logo <- renderImage({
     list(
@@ -251,6 +252,7 @@ server <- function(input, output, session) {
   
   # giving choices to get a comparison of two celltypes for WT
   output$statistic_choice <- renderUI({
+    cell$CellType <- factor(cell$CellType, levels = c("SCP", "Bridging Cells", "CPC", "Sympathoblasts", "ProlifSympathoblasts"))
     if (input$plot == "ViolinPlot") {
         tags$div( # put in div to get both selectinputs in here
           tags$div(
@@ -261,7 +263,7 @@ server <- function(input, output, session) {
             inputId = "comparison1",
             label = "choose first comparison",
             choices = levels(cell$CellType),
-            selected = "Sympathoblasts"
+            selected = "SCP"
           ),
           tags$div(
             HTML("VS"),
@@ -271,7 +273,7 @@ server <- function(input, output, session) {
             inputId = "comparison2",
             label = "Choose second comparison",
             choices = levels(cell$CellType),
-            selected = "Sympathoblasts"
+            selected = "SCP"
           )
       )
     }
@@ -293,9 +295,13 @@ server <- function(input, output, session) {
   # Update the selectize input choices server-side for genes Pseudotime
   updateSelectizeInput(session, "pseudogene", choices = WT_features, server = TRUE, selected = "SOX10")
   
+  
   ##############################################################################
   # WT_Data output
   ################
+  
+  # 1\ Gene Expression tab
+  ########################
   # making a text box above the plots from the first tab for WT
   output$WT_plottext <- renderUI({
     text <- switch(input$plot,
@@ -323,11 +329,10 @@ server <- function(input, output, session) {
                      "<strong>What does it show:</strong> The expression of a gene of interest in each cell type (population).<br>",
                      "<strong>Legend:</strong> The width of each violin represents the density of cells that express a particular gene at different expression levels.
                      Wider sections indicate a higher cell density at these expression levels.<br>",
-                     "Statistics is based on the t test. The t-test compares the mean expression levels of a gene between two groups of cells.
-                     The statistics are visualised using a line between different cell types. Above this line there is 'ns' or '*'.
-                     If the line connecting two cell types is labeled with 'ns', it indicates that there is no significant statistical difference in gene expression 
-                     levels between those cell types. On the other hand, if the line is labeled with '*', it indicates a significant statistical difference. 
-                     The number of '*' symbols corresponds to the level of significance, with more stars suggesting a higher level of statistical difference."
+                     "Statistics is based on the Wilcoxon rank sum test. This test compares the mean expression levels of a gene between two groups of cells.
+                     The statistics are visualised using a line between different cell types. Above the line there is a number representing the p-value. This number is different when changing the comparisons.
+                     If the line connecting two cell types has a p-value bigger than 0.05, it indicates that there is no significant statistical difference in gene expression
+                     levels between those cell types. On the other hand, if the p-value is smaller than 0.05, it indicates a significant statistical difference."
                    )
     )
     text
@@ -336,13 +341,16 @@ server <- function(input, output, session) {
   # Reactive expression to create the violin plot
   WT_ViolinPlot <- reactive({
     req(input$gene, input$comparison1, input$comparison2)  # Ensure inputs are available
-    plot <- VlnPlot(object = cell, 
-                    features = input$gene, pt.size=0) +
+    # changing the order of the violinplot x data
+    cell$CellType <- factor(cell$CellType, levels = c("SCP", "Bridging Cells", "CPC", "Sympathoblasts", "ProlifSympathoblasts"))
+    plot <- VlnPlot(object = cell,
+                    features = input$gene, pt.size=0, fill = factor(cell$CellType)) +
       theme_classic() + 
+      scale_x_discrete(limits = c("SCP", "Bridging Cells", "CPC", "Sympathoblasts", "ProlifSympathoblasts")) +
       theme(axis.text.x = element_text(angle = 45, 
                                        hjust = 1, 
                                        vjust = 1,
-                                       size = 10), 
+                                       size = 15), 
             axis.text.y = element_text(size = 10),  
             plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
             panel.grid.major = element_blank(),
@@ -351,24 +359,20 @@ server <- function(input, output, session) {
             axis.line = element_line(colour = "black"),
             legend.position="none",
             axis.title.x = element_blank(),
-            axis.title.y = element_blank())
-    
+            axis.title.y = element_text())
     # Calculate the maximum y-value of the violin plot
     max_y <- max(ggplot_build(plot)$data[[1]]$ymax)
     
-    # Add stat_compare_means at the top of the plot
+    # Add stat_compare_means at the top of the plot with Wilcoxon rank sum test
     plot + stat_compare_means(comparisons = list(c(input$comparison1, input$comparison2)), 
-                              label = "p.signif", 
-                              label.y = max_y - 1)  # Adjust the value to position the label
-    # place for the statistic calculation output
-    #stat_compare_means(label.y = 1.5)
+                              label.y = max_y - 0.5,  # Adjust the value to position the label
+                              method = "wilcox.test")  # Use Wilcoxon rank sum test
   })
-  
   
   # outputting the plot based on the selected plot type			
   output$WT_diffplots <- renderPlot({			
     # give the UMAP_cluster plot			
-    if (input$plot == "UMAP_Cluster") {			
+    if (input$plot == "UMAP_Cluster") {
       umap_plot_WT <- UMAPPlot(cell, group.by = "CellType")			
       blank_plot <- ggplot() + 			
         theme_void() + 			
@@ -379,17 +383,19 @@ server <- function(input, output, session) {
       grid.arrange(umap_plot_WT, blank_plot, ncol = 2, widths = c(2, 1))			
     }			
     # give the UMAP_cluster + UMAP_GeneExpression plots			
-    else if (input$plot == "UMAP_GeneExpression") {			
+    else if (input$plot == "UMAP_GeneExpression") {
+      featureplot <- FeaturePlot(cell, features = input$gene) + scale_color_gradientn(colors = c("lightgray", "gray", "#FF7700", "#FF3300", "#FF0000"))
       UMAPPlot(cell, group.by = "CellType") +			
-        FeaturePlot(cell, features = input$gene, cols = c("lightgrey", "#FF6600", "#FF0000"))			
-    }			
+        featureplot
+    }	
     # Give the UMAP_cluster + violinplot, without the dots			
-    else if (input$plot == "ViolinPlot") {			
-      # give the UMAP_cluster + violinplot			
+    else if (input$plot == "ViolinPlot") {
+      # give the UMAP_cluster + violinplot
       UMAPPlot(cell, group.by = "CellType") +			
-        WT_ViolinPlot()			
+        WT_ViolinPlot()
     }			
   })
+ 
   
   # Downloading the different gene expression plots for WT
   output$download_UMAP_WT <- downloadHandler(
@@ -418,6 +424,8 @@ server <- function(input, output, session) {
   )
   
   
+  # 2\ DE Genes tab
+  #################
   # making a textbox above the datatable
   output$Datatable_text <- renderUI({
     HTML("<strong>Title:</strong> Differential gene expression analysis.<br>",
@@ -464,6 +472,9 @@ server <- function(input, output, session) {
     }
   )
   
+  
+  # 3\ Signature Score tab
+  ########################
   # making text for the signatureplot tab
   output$signature_text <- renderUI({
     HTML("<strong>Title:</strong> UMAP showing the signature score of the gene set in the populations of interest.<br>",
@@ -485,10 +496,6 @@ server <- function(input, output, session) {
     }
     df <- read.table(input$file$datapath, header = TRUE)
     gene_column <- which(!is.na(df[[1]]))  # Assuming gene names are in the first column
-    if (length(gene_column) == 0) {
-      showNotification("The uploaded file does not contain gene names", type = "warning")
-      return(NULL)
-    }
     trimws(df[[1]])  # Trim leading and trailing whitespace
   })
   
@@ -503,8 +510,8 @@ server <- function(input, output, session) {
     }
     
     # Check if genes are found
-    if (is.null(genes) || length(genes) == 0) {
-      showNotification("No genes found", type = "warning")
+    if (length(genes) < 5) {
+      showNotification("Please input 5 or more genes", type = "warning")
       return(NULL)
     }
     
@@ -529,7 +536,7 @@ server <- function(input, output, session) {
     reset("file")
     
     # Feature plot
-    featureplot <- FeaturePlot(cell, features = "user_genes", cols = c("lightgrey", "#FF6600", "#FF0000"))
+    featureplot <- FeaturePlot(cell, features = "user_genes") + scale_color_gradientn(colors = c("lightgray", "gray", "#FF6600", "#FF3300", "#FF0000"))
     Feature_HeaderPlot<- featureplot + labs(title = header)
     
     # Remove the calculation notification once done
@@ -559,6 +566,9 @@ server <- function(input, output, session) {
     )
   })
   
+  
+  # 4\ Pseudotime analyse tab
+  ###########################
   # making information text for the pseudoanalysis tab
   output$pseudo_text <- renderUI({
     HTML(
@@ -586,6 +596,20 @@ server <- function(input, output, session) {
     )
   }, deleteFile = FALSE)
   
+  # Function to create the combined plots with a title in the left corner
+  combined_plots_with_title <- function(ggplot1, ggplot2, title_text) {
+    # Create the title on the left side
+    title <- textGrob(title_text, gp = gpar(fontsize = 16, fontface = "bold"), x = unit(10, "mm"), just = "left")
+    
+    # Arrange the title and the plots
+    grid.arrange(
+      title,                          # Title
+      arrangeGrob(ggplot1, ggplot2, ncol = 2),  # Plots in a row
+      nrow = 2,                                 # Arrange title above the plots
+      heights = c(0.5,10)                     # Adjust the heights as needed
+    )
+  }
+  
   # Reactive expression to generate ggplots
   ggplots <- reactive({
     req(input$pseudogene)  # Ensure input$pseudogene is available
@@ -612,8 +636,8 @@ server <- function(input, output, session) {
       ggtitle("From SCP to ProlifSympathoblasts") +
       theme(plot.title = element_text(face = "bold"))
     
-    # Arrange the plots next to each other
-    grid.arrange(ggplot1, ggplot2, ncol = 2)
+    # Combine the plots with a title in the left corner
+    combined_plots_with_title(ggplot1, ggplot2, "C")
   })
   
   # Output pseudoplots
@@ -637,7 +661,6 @@ server <- function(input, output, session) {
       ggsave(file, plot = ggplots, device = "png", width = 12, height = 6)  # Adjust width and height as needed, here specified in inches, not pixels
     }
   )
-  
   
   
 }
