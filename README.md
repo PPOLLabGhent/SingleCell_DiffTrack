@@ -9,7 +9,7 @@ The DEGenes.RDS was used to make the DEGenes datatable, the sce_slingshot.rds wa
 ## SupportScripts repository
 In this repository, you can find the scripts that helped me make the ShinyApps. The DEGenes.R was used to make the DEGenes.rds for the DEGenes datatable.
 The Pseudotime_Calculations.R was used to make the Pseudotime.png and the sce_slingshot.rds.
-The Profiling.R script had the package profvis to identify and optimize the performance of the R script.
+The Profiling.R script has the package profvis to identify and optimize the performance of the R script.
 
 ## Publish_ShinyApp
 The files on how to publish the ShinyApp can be found in this repository. The shiny.yml file was used to make the Conda environment. More info about this file and on how to actually publish the ShinyApp on the vesalius.ugent.be server can be found in the publish_shinyapp.md file.
