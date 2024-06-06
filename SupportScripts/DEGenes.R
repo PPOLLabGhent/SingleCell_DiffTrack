@@ -10,7 +10,6 @@ library(Seurat)
 #########################
 #annot <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/RDSObjects/ada_and_stefNoALK_dim20_res06_ANNOT.rds")
 cell <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/RDSObjects/CellsOfInterest_SLB.rds")
-ALK <- readRDS("/kyukon/data/gent/vo/000/gvo00027/PPOL/SharedData/2024_TimBruggeman/RDSObjects/stef_ALK_and_noALK_integrated_SLB.rds")
 
 
 ## diff gene analyse ##
@@ -30,4 +29,5 @@ for (group in comparison_groups) {
   result <- FindMarkers(cell, ident.1 = group)
   all_results[[group]] <- result
 }
+# saving the data in a .rds file
 saveRDS(all_results, file = "DEGenes.RDS")
