@@ -4,18 +4,14 @@ channels:
 
 dependencies:
   - r-base=4.2
-  - r-shiny
-  - r-seurat
-  - r-bslib
-  - r-shinydashboard
-  - r-dt
-  - r-dplyr
-  - r-ggplot2
-  - r-ggpubr
-  - bioconductor-slingshot
-  - r-viridis
+  - r-shiny=1.8.1.1
+  - r-seurat=5.1.0
+  - r-shinydashboard=0.7.2
+  - r-dt=0.33
+  - r-ggplot2=3.5.1
+  - r-ggpubr=0.6.0
   - bioconductor-escape
   - bioconductor-ucell
-  - r-gridextra
-  - r-shinyjs
-  - r-openxlsx
+  - r-gridextra=2.3
+  - r-shinyjs=2.1.0
+  - r-openxlsx=4.2.5.2
